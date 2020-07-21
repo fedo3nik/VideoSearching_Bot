@@ -58,7 +58,16 @@ class BotHandler:
         return response
 
 
-myToken = 'There should be yor bot Token'
+def video_search(request_text):
+    search_url = 'https://www.youtube.com/results?search_query='
+    text = request_text.split()
+    converted_text = '+'.join(text)
+    response = requests.get(search_url + converted_text)
+
+    return response.url
+
+
+myToken = '1289978518:AAFBKwH8CNyjIru3oE8kKSgmQtW6E9K3XNI'
 
 bot = BotHandler(myToken)
 # This tuple contains greeting keywords
@@ -80,26 +89,24 @@ def main():
         last_chat_user = bot.get_user_name()
         last_chat_message = bot.get_message_text()
 
-        # Greeting for morning
         if (last_chat_message.lower()).strip() in user_greetings and 6 <= current_hour < 12:
             bot.send_message(bot_greetings[0] + ' ' + last_chat_user)
 
-        # Greeting for afternoon
         elif (last_chat_message.lower()).strip() in user_greetings and 12 <= current_hour < 16:
             bot.send_message(bot_greetings[1] + ' ' + last_chat_user)
 
-        # Greeting for evening
         elif (last_chat_message.lower()).strip() in user_greetings and 16 <= current_hour < 24:
             bot.send_message(bot_greetings[2] + ' ' + last_chat_user)
 
-        # Greeting for night
         elif (last_chat_message.lower()).strip() in user_greetings and 0 <= current_hour < 6:
             bot.send_message(bot_greetings[3] + '' + last_chat_user)
 
-        # Case which called if user send message without greeting
-        else:
-            bot.send_message('Sorry, but right now I can only greet you')
+        elif ((last_chat_message.lower()).strip()).find('search') != -1:
+            search_text = last_chat_message.split(' ', 1)
+            bot.send_message('Your search result \n' + video_search(search_text[1]))
 
+        else:
+            bot.send_message('Sorry but I can\'t answer at your message')
         new_offset = last_update_id + 1
 
 
