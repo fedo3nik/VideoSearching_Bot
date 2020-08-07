@@ -1,63 +1,19 @@
-import requests
 import datetime
-from time import sleep
+import requests
+
+from bot_handler import BotHandler
+
+# TODO: Move the token to the config file or to the environment variable
+myToken = ''
+
+bot = BotHandler(myToken)
+# This tuple contains greeting keywords
+user_greetings = ('hello', 'hi', 'whats up', 'good afternoon')
+bot_greetings = ('Good morning', 'Good afternoon', 'Good evening', 'Hello night owl!')
+currentTime = datetime.datetime.now()
 
 
-# Class which describes main functionality of the bot
-class BotHandler:
-    # Class constructor. Parameter "token" is your bot token
-    def __init__(self, token):
-        self.token = token
-        self.api_url = 'https://api.telegram.org/bot{}/'.format(token)
-
-    # Main method which returns updates off your bot in the json format
-    def get_updates(self, offset=None, timeout=100):
-        method = 'getUpdates'
-        params = {'timeout': timeout, 'offset': offset}
-        response = requests.get(self.api_url + method, params)
-        result_json = response.json()['result']
-        return result_json
-
-    # Method which returns last update with information about user who send message to your bot
-    def get_last_update(self):
-        get_result = self.get_updates()
-
-        if len(get_result) > 0:
-            last_update = get_result[-1]
-        else:
-            last_update = get_result[len(get_result)]
-
-        return last_update
-
-    # Method which returns chat id
-    def get_chat_id(self):
-        chat_id = self.get_last_update()['message']['chat']['id']
-        return chat_id
-
-    # Method which returns update id
-    def get_update_id(self):
-        update_id = self.get_last_update()['update_id']
-        return update_id
-
-    # Method which returns first name of the person who send last message
-    def get_user_name(self):
-        user_name = self.get_last_update()['message']['chat']['first_name']
-        return user_name
-
-    # Method which returns text of the last message from user
-    def get_message_text(self):
-        user_message = self.get_last_update()['message']['text']
-        return user_message
-
-    # Method which send message to the user
-    def send_message(self, message_text):
-        method = 'sendMessage'
-        params = {'chat_id': self.get_chat_id(), 'text': message_text}
-
-        response = requests.post(self.api_url + method, params)
-        return response
-
-
+# TODO: Make class for Youtube API
 def video_search(request_text):
     search_url = 'https://www.youtube.com/results?search_query='
     text = request_text.split()
@@ -67,46 +23,40 @@ def video_search(request_text):
     return response.url
 
 
-myToken = '1289978518:AAFBKwH8CNyjIru3oE8kKSgmQtW6E9K3XNI'
+def answer(mess_text, user, hour):
+    if (mess_text.lower()).strip() in user_greetings and 6 <= hour < 12:
+        bot.send_message(bot_greetings[0] + ' ' + user)
 
-bot = BotHandler(myToken)
-# This tuple contains greeting keywords
-user_greetings = ('hello', 'hi', 'whats up', 'good afternoon')
-currentTime = datetime.datetime.now()
+    elif (mess_text.lower()).strip() in user_greetings and 12 <= hour < 16:
+        bot.send_message(bot_greetings[1] + ' ' + user)
+
+    elif (mess_text.lower()).strip() in user_greetings and 16 <= hour < 24:
+        bot.send_message(bot_greetings[2] + ' ' + user)
+
+    elif (mess_text.lower()).strip() in user_greetings and 0 <= hour < 6:
+        bot.send_message(bot_greetings[3] + '' + user)
+
+    elif ((mess_text.lower()).strip()).find('search') != -1:
+        search_text = mess_text.split(' ', 1)
+        bot.send_message('Your search result \n' + video_search(search_text[1]))
+
+    else:
+        bot.send_message('Sorry but I can\'t answer your message')
 
 
 def main():
     new_offset = None
-    current_day = currentTime.day
-    current_hour = currentTime.hour
-
-    bot_greetings = ('Good morning', 'Good afternoon', 'Good evening', 'Hello night owl!')
 
     while True:
+        current_hour = currentTime.hour
         bot.get_updates(new_offset)
 
-        last_update_id = bot.get_update_id()
-        last_chat_user = bot.get_user_name()
-        last_chat_message = bot.get_message_text()
+        last_update_id = bot.update_id
+        last_chat_user = bot.user_name
+        last_chat_message = bot.user_message
 
-        if (last_chat_message.lower()).strip() in user_greetings and 6 <= current_hour < 12:
-            bot.send_message(bot_greetings[0] + ' ' + last_chat_user)
+        answer(last_chat_message, last_chat_user, current_hour)
 
-        elif (last_chat_message.lower()).strip() in user_greetings and 12 <= current_hour < 16:
-            bot.send_message(bot_greetings[1] + ' ' + last_chat_user)
-
-        elif (last_chat_message.lower()).strip() in user_greetings and 16 <= current_hour < 24:
-            bot.send_message(bot_greetings[2] + ' ' + last_chat_user)
-
-        elif (last_chat_message.lower()).strip() in user_greetings and 0 <= current_hour < 6:
-            bot.send_message(bot_greetings[3] + '' + last_chat_user)
-
-        elif ((last_chat_message.lower()).strip()).find('search') != -1:
-            search_text = last_chat_message.split(' ', 1)
-            bot.send_message('Your search result \n' + video_search(search_text[1]))
-
-        else:
-            bot.send_message('Sorry but I can\'t answer at your message')
         new_offset = last_update_id + 1
 
 
