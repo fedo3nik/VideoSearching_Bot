@@ -1,12 +1,15 @@
 import datetime
 import requests
+import configparser
 
 from bot_handler import BotHandler
 
-# TODO: Move the token to the config file or to the environment variable
-myToken = ''
+config = configparser.ConfigParser()
+config.read('config.ini')
+myTelegramToken = config['Data']['telegram_token']
 
-bot = BotHandler(myToken)
+
+bot = BotHandler(myTelegramToken)
 # This tuple contains greeting keywords
 user_greetings = ('hello', 'hi', 'whats up', 'good afternoon')
 bot_greetings = ('Good morning', 'Good afternoon', 'Good evening', 'Hello night owl!')
@@ -50,6 +53,7 @@ def main():
     while True:
         current_hour = currentTime.hour
         bot.get_updates(new_offset)
+        bot.get_last_update()
 
         last_update_id = bot.update_id
         last_chat_user = bot.user_name

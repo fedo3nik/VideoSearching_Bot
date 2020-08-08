@@ -8,8 +8,8 @@ class BotHandler:
         self.token = token
         self.api_url = 'https://api.telegram.org/bot{}/'.format(token)
         self.getUpdates = 'getUpdates'
-        self.update_id = 'update_id'
-        self.chat_id = 'chat_id'
+        self.update_id = 1
+        self.chat_id = 1
         self.user_name = 'user_name'
         self.user_message = 'user_message'
 
@@ -35,7 +35,7 @@ class BotHandler:
     # Method which send message to the user
     def send_message(self, message_text):
         method = 'sendMessage'
-        params = {'chat_id': self.get_chat_id(), 'text': message_text}
+        params = {'chat_id': self.chat_id, 'text': message_text}
 
         response = requests.post(self.api_url + method, params)
         return response
